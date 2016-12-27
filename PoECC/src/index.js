@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
+import PoECC from './PoECC';
 import './index.css';
 
 ReactDOM.render(
-  <App />,
+  <PoECC />,
   document.getElementById('root')
 );
