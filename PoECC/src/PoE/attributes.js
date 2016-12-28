@@ -23,8 +23,8 @@ class PoEStat {
     }
     return value;
   }
-  getString(attributes) {
-    let value = String(this.calculateValue(attributes)), string;
+  toString(stat) {
+    let value = String(this.calculateValue(stat)), string;
     if (this.is_multiplicative) {
       string = value + '%';
     } else {
@@ -134,3 +134,6 @@ export const Resolve = new PoEAttribute('Resolve', RES, {
   highly_recommended: ['Fighter', 'Paladin'],
   recommended: ['Chanter', 'Druid', 'Priest'],
 });
+
+export const Indexes = [MIG, CON, DEX, PER, INT, RES];
+export const AllAttributes = [Might, Constitution, Dexterity, Perception, Intellect, Resolve];
