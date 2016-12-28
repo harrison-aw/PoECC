@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import * as Attributes from './PoE/attributes';
 import * as Races from './PoE/races';
 import * as Classes from './PoE/classes';
+import * as Culture from './PoE/culture';
 import './PoECC.css';
 
 function PoEButton(props) {
@@ -41,8 +42,7 @@ class PoENavigation extends Component {
       return ['Sex', 'Race', 'Class', 'Attributes', 'Culture', 'Appearance'];
   }
   render() {
-    var buttons = [];
-    PoENavigation.buttonLabels().forEach((label) => buttons.push(<PoEButton key={label} label={label} onClick={() => this.props.changePanel(label)} />));
+    let buttons = PoENavigation.buttonLabels().map((label) => <PoEButton key={label} label={label} onClick={() => this.props.changePanel(label)} />);
     return (
       <div className="PoENavigation">
         {buttons}
@@ -84,18 +84,24 @@ class PoEChooseSex extends Component {
 }
 
 class PoEChooseRace extends Component {
-  render() {
-    let allraces = Races.AllRaces.map((race) => (
+  buildRaceButton(race) {
+    return (
       <li key={race.name+'-li'}>
         <PoEButton key={race.name} label={race.name} onClick={() => this.props.changeRace(race)} />
       </li>
-    ));
-    
-    let subraces = this.props.Race.subraces.map((sub) => (
+    );
+  }
+  
+  buildSubraceButton(sub) {
+    return (
       <li key={sub.name+'-li'}>
         <PoEButton key={sub.name} label={sub.name} onClick={() => this.props.changeSubrace(sub)} />
       </li>
-    ));
+    );
+  }
+  render() {
+    let allraces = Races.AllRaces.map((race) => this.buildRaceButton(race));
+    let subraces = this.props.Race.subraces.map((sub) => this.buildSubraceButton(sub));
 
     return (
       <div className="PoEChooseRace">
@@ -128,40 +134,70 @@ class PoEChooseClass extends Component {
 }
 
 class PoEChooseAttributes extends Component {
-  render() {
-    let attribute_controls = Attributes.AllAttributes.map((attr) => (
+  buildDecreaseHandler(attr) {
+    return () => {
+      let newattrs = this.props.Attributes;
+      let i = attr.index;
+      
+      if (newattrs[i] > this.props.min_points[i]) {
+        newattrs[attr.index] -= 1;
+        this.props.changeAttributes(newattrs);
+      }
+    };
+  }
+  
+  buildIncreaseHandler(attr) {
+    return () => {
+      let newattrs = this.props.Attributes;
+      let i = attr.index;
+      
+      if (this.props.unallocated_points > 0 && newattrs[i] < this.props.max_points[i]) {
+        newattrs[i] += 1;
+        this.props.changeAttributes(newattrs);
+      }
+    };
+  }
+  
+  buildControl(attr) {
+    return (
       <li key={attr.name+'-li'}>
-        {attr.name}
-        <PoEButton key={attr.name+'-<'} label='<' onClick={() => {
-          let newattrs = this.props.Attributes;
-          if (newattrs[attr.index] > this.props.min_points[attr.index]) {
-            newattrs[attr.index] -= 1;
-            this.props.changeAttributes(newattrs);
-          }
-        }} />
+        <span key={attr.name+'-span'}>{attr.name}</span>
+        <PoEButton key={attr.name+'-<'} label='<' onClick={this.buildDecreaseHandler(attr)} />
         {this.props.Attributes[attr.index]}
-        <PoEButton key={attr.name+'->'} label='>' onClick={() => {
-          let newattrs = this.props.Attributes;
-          if (this.props.unallocated_points > 0 && newattrs[attr.index] < this.props.max_points[attr.index]) {
-            newattrs[attr.index] += 1;
-            this.props.changeAttributes(newattrs);
-          }
-        }} />
+        <PoEButton key={attr.name+'->'} label='>' onClick={this.buildIncreaseHandler(attr)} />
       </li>
-    ));
+    );
+  }
+  
+  render() {
+    let attribute_controls = Attributes.AllAttributes.map((attr) => this.buildControl(attr));
+    
     return (
       <div className="PoEChooseAttributes">
-       {attribute_controls}
+       <ul>
+         {attribute_controls}
+       </ul>
       </div>
     );
   }
 }
 
 class PoEChooseCulture extends Component {
+  buildCultureButton(cul) {
+    return (
+      <li key={cul.name+'-li'}>
+        <PoEButton key={cul.name+'-PoEButton'} label={cul.name} onClick={() => this.props.changeCulture(cul)} />
+      </li>
+    );
+  }
+
   render() {
+    let cultures = Culture.AllCultures.map((cul) => this.buildCultureButton(cul));
     return (
       <div className="PoEChooseCulture">
-        Placeholder (Culture)
+        <ul>
+         {cultures}
+        </ul>
       </div>
     );
   }
@@ -178,21 +214,30 @@ class PoEChooseAppearance extends Component {
 }
 
 class PoECC extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
-      main_panel: 'Race',
+      main_panel: 'Sex',
       Sex: 'Male',
       Race: Races.Human,
       Subrace: Races.Meadow,
       Class: Classes.Barbarian,
       ClassAbilities: [],
-      Attributes: [11,10,10,10,10,11],
+      Attributes: [11,10,10,10,10,12],
+      Culture: Culture.Aedyr,
+      Background: Culture.Aristocrat,
     };
   }
 
   get Abilities() {
     return [this.state.Subrace.ability].concat(this.state.Class.starting_abilities, this.state.ClassAbilities);
+  }
+  
+  get AttributesObject() {
+    return Attributes.AllAttributes.reduce((ob, attr, i, allattrs) => {
+      ob[attr.name] = this.state.Attributes[attr.index];
+      return ob;
+    }, {});
   }
 
   get unallocated_points() {
@@ -209,40 +254,72 @@ class PoECC extends Component {
     let race_attr = this.state.Race.attributes;
     return Attributes.Indexes.map((i) => 18 + race_attr[i]);
   }
+  
+  buildSexPanel() {
+    return 
+  }
+  
+  updateSex(newsex) {
+    this.setState({Sex: newsex})
+  }
+  
+  updateRace(newrace) {
+    this.setState({
+      Race: newrace, 
+      Subrace: newrace.chooseSubrace(),
+      Attributes: Attributes.Indexes.map((i) => this.state.Attributes[i] - this.state.Race.attributes[i] + newrace.attributes[i]),
+    });
+  }
+  
+  updateSubrace(newsub) {
+    this.setState({Subrace: newsub});
+  }
+  
+  updateClass(newclass) {
+    this.setState({Class: newclass});
+  }
+  
+  updateAttributes(newattrs) {
+    this.setState({Attributes: newattrs});
+  }
+  
+  updateCulture(newcul) {
+    this.setState({
+      Culture: newcul,
+      Background: newcul.backgrounds[0],
+      Attributes: Attributes.Indexes.map((i) => this.state.Attributes[i] - (i === this.state.Culture.attribute ? 1 : 0) + (i === newcul.attribute ? 1 : 0)),
+    });
+  }
+  
+  updateBackground(newbac) {
+    this.setState({Background: newbac});
+  }
 
   render() {
     let main_panel = this.state.main_panel;
     let panel_to_render;
     
     if (main_panel === 'Sex') {
-        panel_to_render = <PoEChooseSex 
-          chooseSex={(newsex) => this.setState({Sex: newsex})}
-        />;
+        panel_to_render = <PoEChooseSex chooseSex={(newsex) => this.updateSex(newsex)} />;
     } else if (main_panel === 'Race') {
-        panel_to_render = <PoEChooseRace
-          Race={this.state.Race}
-          changeRace={(newrace) => this.setState({
-            Race: newrace, 
-            Subrace: newrace.chooseSubrace(),
-            Attributes: Attributes.Indexes.map((i) => this.state.Attributes[i] - this.state.Race.attributes[i] + newrace.attributes[i]),
-          })}
-          changeSubrace={(newsub) => this.setState({Subrace: newsub})}
-        />
+        panel_to_render = <PoEChooseRace Race={this.state.Race} changeRace={(newrace) => this.updateRace(newrace)} changeSubrace={(newsub) => this.updateSubrace(newsub)} />
     } else if (main_panel === 'Class') {
-        panel_to_render = <PoEChooseClass
-          Class={this.state.Class}
-          changeClass={(newclass) => this.setState({Class: newclass})}
-        />;
+        panel_to_render = <PoEChooseClass Class={this.state.Class} changeClass={(newclass) => this.updateClass(newclass)} />;
     } else if (main_panel === 'Attributes') {
         panel_to_render = <PoEChooseAttributes 
           Attributes={this.state.Attributes}
           unallocated_points={this.unallocated_points}
           min_points={this.min_points}
           max_points={this.max_points}
-          changeAttributes={(newattrs) => this.setState({Attributes: newattrs})}
+          changeAttributes={(newattrs) => this.updateAttributes(newattrs)}
         />;
     } else if (main_panel === 'Culture') {
-        panel_to_render = <PoEChooseCulture />;
+        panel_to_render = <PoEChooseCulture
+          Culture={this.state.Culture}
+          Background={this.state.Background}
+          changeCulture={(newcul) => this.updateCulture(newcul)}
+          changeBackground={(newbac) => this.updateBackground(newbac)}
+        />;
     } else {
         panel_to_render = <PoEChooseAppearance />;
     }
@@ -258,10 +335,9 @@ class PoECC extends Component {
           Subrace: this.state.Subrace.name,
           Class: this.state.Class.name,
           Abilities: this.Abilities.map((ab) => ab.name),
-          Attributes: Attributes.AllAttributes.reduce((ob, attr, i, allattrs) => {
-            ob[attr.name] = this.state.Attributes[attr.index];
-            return ob;
-          }, {}),        
+          Attributes: this.AttributesObject,
+          Culture: this.state.Culture.name,
+          Background: this.state.Background.name,
         }} />
       </div>
     );
