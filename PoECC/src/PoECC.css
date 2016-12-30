@@ -1,48 +1,95 @@
 h2 {
-  font-size: 12pt;
+	font-size: 12pt;
 }
 
 ul {
-  list-style: none;
-  padding-left: 10px;
+	list-style: none;
+	padding-left: 10px;
 }
 
 .PoECC {
-  text-align: center;
-  width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-  position: relative;
-  padding-left: 200px;
-  padding-right: 200px;
-  display: block;
+	text-align: center;
+	width: 1024px;
+	height: 576px;
+	margin-left: auto;
+	margin-right: auto;
+	position: relative;
+	padding: 0px;
+	display: block;
+	background: url(pillars-of-eternity-character-creation.jpg);
 }
 
 .PoEAppearance {
-  width: 200px;
-  background-color: red;
-  position: absolute;
-  top: 0px;
-  left: 0px;
+	width: 200px;
+	background-color: red;
+	position: absolute;
+	top: 0px;
+	left: -200px;
 }
+
+/* Navigation */
 
 .PoENavigation {
+	width: 0px;
+	height: 0px;
+	position: relative;
 }
 
+.PoENavigation .PoEButton {
+	position: absolute;
+	top: 32px;
+}
+
+.navSex {
+	left: 94px;
+}
+
+.navRace {
+	left: 192px;
+}
+
+.navClass {
+	left: 296px;
+}
+
+.navAttributes {
+	left: 470px;
+}
+
+.navCulture {
+	left: 668px;
+}
+
+.navAppearance {
+	left: 760px;
+}
+
+.PoEPanel {
+	width: 245px;
+	height: 235px;
+	border: 1px solid red;
+	position: absolute;
+	top: 220px;
+	left: 80px;
+	padding-top: 25px;
+}
+
+
+
 .PoECharacterStats {
-  text-align: left;
-  width: 200px;
-  background-color: red;
-  position: absolute;
-  top: 0px;
-  right: 0px;
+	text-align: left;
+	width: 200px;
+	background-color: red;
+	position: absolute;
+	top: 0px;
+	right: -200px;
 }
 
 .PoEChooseRace ul {
-  float: left;
-  width: 200px;
+	float: left;
+	width: 200px;
 }
 
 .AllRaces {
-  margin-left: 275px;
+	margin-left: 275px;
 }
